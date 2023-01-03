@@ -1,0 +1,284 @@
+---
+title: "Rで学ぶ確率統計学　一変量統計編　第１章"
+format:
+  html:
+    toc: true
+    number-sections: true
+    html-math-method: katex
+embed-resources: true
+---
+
+## 環境構築
+
+-   データハンドリングに有用なパッケージ群を積極的に活用する
+
+```{r}
+if(!require("pacman")) {install.packages("pacman")}
+
+pacman::p_load(tidyverse, here, skimr)
+```
+
+## 1変量データの扱い方
+
+### データの読み込み
+
+-   クリップボードからの読み込み方法：`scan("Clipboad")`
+-   再現性担保のためCSVから機械的に読み込む
+
+```{r}
+# here("Rawdata", "R_book_1") %>% list.files()
+
+math <- readr::read_csv(here("Rawdata", "R_book_1", "Math&Phys.csv")) |> 
+    dplyr::select(math)
+glimpse(math)
+```
+
+### ヒストグラムの描写
+
+-   bin: 階級
+-   bin width: 階級の幅
+-   Number of bin: 階級の数
+-   frequency: 度数、階級に当てはまるデータの個数
+-   relative frequency: 全体を１とした場合の割合を示したもの
+-   `geom_histogram`では相対度数の表現方法が見つからなかったので、マニュアルで計算した
+-   `hist()`はデフォルトで左半開区間: $a < x \leqq b$
+    -   `(a, b]`とも表記する
+
+```{r}
+math |> 
+    ggplot(aes(x = math)) +
+    geom_histogram(binwidth = 10)
+
+math |>  
+    dplyr::mutate(math_bin = cut_width(math, width = 10)) |> 
+    dplyr::group_by(math_bin) |> 
+    dplyr::summarise(n = n(), .groups = "drop") |> 
+    dplyr::mutate(n_p = n/sum(n)) |> 
+    dplyr::arrange(math_bin) |> 
+    ggplot(aes(x = math_bin,
+               y = n_p)) +
+    geom_bar(stat = "identity", width = 1)
+
+```
+
+### 1変数の要約
+
+#### 平均値
+
+##### 算術平均 (arithmetic mean)
+
+$$\bar{x} = \frac{1}{n}\sum^{n}_{j=1}x_j$$
+```{r}
+mean(math$math)
+```
+
+
+
+##### 幾何平均 (Geometric mean)
+
+-   増加率の平均など
+
+$$x_G = \sqrt[n]{x_1x_2x_3 \cdots x_n}$$
+
+```{r}
+prod(math$math)^(1/length(math$math))
+```
+
+##### 調和平均 (harmonic mean)
+
+-   速度の平均など
+
+$$\frac{1}{x_H} = \frac{1}{n}\sum^{n}_{j=1}\frac{1}{x_j}$$
+```{r}
+v <- c(60, 20)
+1/mean(1/v)
+
+```
+
+
+
+#### 分散
+
+$$\sigma^2=\frac{1}{n}\sum^{n}_{j=1}(x_j - \bar{x})^2$$
+
+#### 不偏分散
+
+-   チルダ(~)は不偏推定量を意味する
+-   ハット(^)は推定量を意味する
+
+$$\tilde{\sigma^2}=\frac{1}{n-1}\sum^{n}_{j=1}(x_j - \bar{x})^2$$
+#### 標準偏差
+
+-   分散の平方根
+
+$$\sigma=\sqrt{\frac{1}{n}\sum^{n}_{j=1}(x_j - \bar{x})^2}$$
+
+-   不偏分散を用いて求めることのほうが多い
+
+$$\sigma=\sqrt{\frac{1}{n-1}\sum^{n}_{j=1}(x_j - \bar{x})^2}$$
+
+```{r}
+# 不偏分散
+var(math$math)
+
+# 確認する
+epsilon_squad <- 
+    math |> 
+    dplyr::mutate(epsilon = math - mean(math)) |> 
+    dplyr::mutate(epsilon_squad = epsilon^2) |> 
+    dplyr::pull(epsilon_squad) 
+
+sum(epsilon_squad)/(length(epsilon_squad)-1)
+
+# 標準偏差
+sd(math$math)
+```
+
+### 階級数の決め方
+
+-   **スタージェスの公式 (Sturges' rule)**
+    -   $\lceil$および$\rceil$は天井関数を示す
+    -   $\lceil x \rceil$は$x$の小数点を切り上げた整数
+
+$$
+k = \lceil1+\log_2n \rceil
+$$
+
+```{r}
+# mathデータの場合
+1+log(length(math$math), base = 2)
+
+ceiling(1+log(length(math$math), base = 2)) 
+```
+
+-   Rにはその他にも、**スコットの選択法 (Scott's choice)**、**フリードマン=ダイアコニスの選択法 (Freedman-Diaconis' choice)** が用意されている
+
+### グラフの保存方法
+
+-   省略
+
+### 分位点と箱ひげ図
+
+-   **中央値 (Median)**:データを大きさの順に並べた際の真ん中の値
+    -   偶数の場合は真ん中２つの平均値
+
+```{r}
+median(c(56, 78, 81, 90))
+```
+
+-   **第一四分位点・第三四分位点**: 小さい方から25%、75％の値
+-   **四分位偏差 (IQR: inter-quantile range)**: Q3-Q1、メディアン付近にどの程度データが集まっているかを示す
+
+#### 箱ひげ図の解釈
+
+```{r}
+math |> 
+    dplyr::summarise(across(.cols = math, 
+                            .names = "{.fn}",
+                            .fns = list(mean = mean,
+                                        min = min,
+                                        max = max,
+                                        Q1 = ~quantile(.x, 0.25),
+                                        Q3 = ~quantile(.x, 0.75)
+                            ))) |> 
+    dplyr::mutate(UpperLim = Q3 + (Q3-Q1)*1.5,
+                  LowerLim = Q1 - (Q3-Q1)*1.5)
+                        
+
+math |> 
+    ggplot(aes(x = "", y = math)) +
+    geom_boxplot() +
+    scale_x_discrete(name = "")
+
+```
+
+-   ひげの最上位は$Q3+1.5\times IQR$、最下位は$Q1-1.5\times IQR$、データがその範囲にない場合はそれぞれ最大値、最小値が入る
+    -   そのため、ひげの長さが上下で均等にならない場合がある
+-   箱ひげ図の書き方には複数流儀がある
+    -   例：高校の数学の教科書では最大値・最小値が入るとしている
+    
+### 外れ値
+
+-   Boxplotのひげの外にある点、定義は様々
+-   平均値は外れ値に敏感に反応し、中央値は**頑強 (robust) **である
+
+```{r}
+iris |> 
+    tidyr::pivot_longer(cols = -Species,
+                        names_to = "param",
+                        values_to = "val") |> 
+    dplyr::filter(!param %in% c("Petal.Width")) |> 
+    dplyr::mutate(param = fct_relevel(param, "Sepal.Length", "Sepal.Width")) |> 
+    ggplot(aes(x = param,
+               y = val)) +
+    geom_boxplot()
+
+
+```
+
+### 最頻値
+
+```{r}
+math |> 
+    dplyr::pull(math) |> 
+    table() |> 
+    which.max() |> 
+    names()
+```
+
+### 欠損値
+
+-   Rでは`NA` (Not Available) という記号で表現される
+-   `NA`に対する四則演算、論理演算はすべて`NA`で返される
+
+```{r}
+here("Rawdata", "R_book_1") %>% list.files()
+
+math_na <- readr::read_csv(here("Rawdata", "R_book_1", "Not Available.csv")) |> 
+    dplyr::pull(1)
+skimr::skim(math_na)
+
+math_na2 <- c(NA, math_na)
+mean(math_na2)
+
+mean(math_na2, na.rm = TRUE)
+```
+
+## 章末問題
+
+### 1-1
+
+以下より男性の方がばらつきが小さい
+
+```{r}
+# 男性
+5.63/171.58*100
+
+# 女性
+5.56/158.23*100
+
+```
+
+### 1-2
+
+```{r}
+v <- c(2,5,11,7,9)
+
+# 平均
+mean(v)
+
+#　幾何平均
+prod(v)^(1/length(v))
+
+# 調和平均
+1/mean(1/v)
+
+# 不偏分散
+var(v)
+
+# 不偏分散の平方根
+sqrt(var(v))
+```
+
+### 1-3
+
