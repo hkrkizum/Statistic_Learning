@@ -5,7 +5,7 @@ format:
     toc: true
     number-sections: true
     html-math-method: katex
-embed-resources: true
+    embed-resources: true
 ---
 
 ## 環境構築
@@ -107,6 +107,7 @@ $$\sigma^2=\frac{1}{n}\sum^{n}_{j=1}(x_j - \bar{x})^2$$
 -   ハット(^)は推定量を意味する
 
 $$\tilde{\sigma^2}=\frac{1}{n-1}\sum^{n}_{j=1}(x_j - \bar{x})^2$$
+
 #### 標準偏差
 
 -   分散の平方根
@@ -232,7 +233,7 @@ math |>
 -   `NA`に対する四則演算、論理演算はすべて`NA`で返される
 
 ```{r}
-here("Rawdata", "R_book_1") %>% list.files()
+# here("Rawdata", "R_book_1") %>% list.files()
 
 math_na <- readr::read_csv(here("Rawdata", "R_book_1", "Not Available.csv")) |> 
     dplyr::pull(1)
