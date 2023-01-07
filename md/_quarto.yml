@@ -13,4 +13,5 @@ website:
     contents:
       - section: "Rで学ぶ確率統計学　一変量統計編"
         contents:
-            - R_book_1_Chapt_1.qmd    
+            - R_book_1_Chapt_1.qmd
+            - R_book_1_Chapt_2.qmd
