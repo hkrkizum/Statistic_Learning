@@ -1,0 +1,19 @@
+---
+title: "Rで学ぶ確率統計学　一変量統計編　第２章"
+format:
+  html:
+    toc: true
+    number-sections: true
+    html-math-method: katex
+    embed-resources: true
+---
+
+## 環境構築
+
+-   データハンドリングに有用なパッケージ群を積極的に活用する
+
+```{r}
+if(!require("pacman")) {install.packages("pacman")}
+
+pacman::p_load(tidyverse, here, skimr)
+```
