@@ -1,0 +1,6 @@
+---
+title: "Study note"
+format: html
+---
+
+このページは備忘録です
