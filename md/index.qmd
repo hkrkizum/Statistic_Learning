@@ -1,6 +1,11 @@
 ---
 title: "Study note"
-format: html
+format:
+  html:
+    toc: true
+    number-sections: true
+    html-math-method: katex
+    embed-resources: true
 ---
 
 このページは備忘録です
