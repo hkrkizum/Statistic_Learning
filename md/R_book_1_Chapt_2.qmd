@@ -1,12 +1,18 @@
 ---
-title: "Rで学ぶ確率統計学　一変量統計編　第２章"
+title: "第２章"
+subtitle: "多変量データの記述１"
+date-modified: "`r file.mtime(here::here('md', 'R_book_1_Chapt_2.qmd'))`"
 format:
   html:
     toc: true
     number-sections: true
     html-math-method: katex
     embed-resources: true
+params:
+  filename: "" 
 ---
+
+
 
 ## 環境構築
 
@@ -15,5 +21,60 @@ format:
 ```{r}
 if(!require("pacman")) {install.packages("pacman")}
 
-pacman::p_load(tidyverse, here, skimr)
+pacman::p_load(tidyverse, here, skimr, patchwork)
 ```
+
+## 散布図
+
+-   physのスコアを取り出す
+
+```{r}
+score <- readr::read_csv(here("Rawdata", "R_book_1", "Math&Phys.csv")) 
+glimpse(score)
+
+# hist(score$phys)
+g1 <- 
+    ggplot(data = score,
+       aes(x = phys)) +
+    geom_histogram(bins = 10)
+
+g2 <- 
+    ggplot(data = score,
+       aes(x = math,
+           y = phys)) +
+    geom_point()
+
+g1 + g2
+```
+
+## 相関関係
+
+-   -1から1までの間の値を取る
+    -   1に近い場合：**正の相関がある**
+    -   -1に近い場合：**負の相関がある**
+    -   0に近い場合：**相関がない**
+
+```{r}
+cor(score$math, score$phys)
+```
+
+### ピアソンの積率相関係数
+
+-   **Pearson's product-moment correlation coefficient**
+
+$$
+r=r_{xy}=
+\frac{\sum^n_{j=1}(x_j-\bar{x})(yj-\bar{y})}
+{ \sqrt{\sum^n_{j=1}(x_j-\bar{x})^2} \sqrt{\sum^n_{j=1}(y_j-\bar{y})^2} }
+$$
+
+-   $r_{xy}$は平均偏差ベクトル $$
+    x= (x_1 - \bar{x}, x_2 - \bar{x}, x_3 - \bar{x},\cdots x_n - \bar{x}) \\
+    y= (y_1 - \bar{y}, y_2 - \bar{y}, y_3 - \bar{y},\cdots y_n - \bar{y})
+    $$
+
+のなす角$\theta$の余弦$\cos\theta$に一致する
+
+#### 平均偏差ベクトルと相関係数
+
+

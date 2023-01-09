@@ -1,5 +1,7 @@
 ---
-title: "Rで学ぶ確率統計学　一変量統計編　第１章"
+title: "第１章"
+subtitle: "一変量データの記述"
+date-modified: "`r file.mtime(here::here('md', 'R_book_1_Chapt_1.qmd'))`"
 format:
   html:
     toc: true
